@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Agentic Abstention studies when LLM agents should stop acting. Explore three environments, timing-aware evaluation, and CONVOLVE, a method that learns reusable stopping rules.">
+  <meta name="theme-color" content="#393a35">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Agentic Abstention: Do Agents Know When to Stop Instead of Act?">
+  <meta property="og:description" content="Knowing when to stop is part of knowing how to act. A study of agentic abstention across web, terminal, and interactive QA environments.">
+  <meta property="og:url" content="https://agentic-abstention.github.io/">
+  <meta property="og:image" content="https://agentic-abstention.github.io/assets/abstention-recall.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://agentic-abstention.github.io/">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="results-data.js" defer></script>
+  <script src="script.js" defer></script>
+  <title>Agentic Abstention — Do Agents Know When to Stop Instead of Act?</title>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="nav-inner">
+      <a class="wordmark" href="#top" aria-label="Agentic Abstention home">AA<span class="wordmark-dot" aria-hidden="true">.</span></a>
+      <nav aria-label="Main navigation">
+        <a href="#overview">Overview</a><a href="#benchmark">Benchmark</a><a href="#results">Results</a><a href="#convolve">CONVOLVE</a><a href="https://hera-bench.github.io/">HERA <span aria-hidden="true">↗</span></a><a href="https://github.com/lhannnn/agentic-abstention">GitHub <span aria-hidden="true">↗</span></a>
+      </nav>
+    </div>
+  </header>
+  <main id="main">
+    <section class="hero page-width" id="top" aria-labelledby="paper-title">
+      <p class="eyebrow">Agentic Abstention / NeurIPS 2026</p>
+      <h1 id="paper-title">Agentic Abstention:<br> Do Agents Know When to Stop<br class="desktop-break"> Instead of Act?</h1>
+      <p class="hero-deck">Knowing when to stop is part of knowing how to act.</p>
+      <div class="authors" aria-label="Authors in publication order">
+        <span><a href="https://lhannnn.github.io/">Han Luo</a><sup>1,2,*</sup></span>
+        <span>Bingbing Wen<sup>1,*</sup></span>
+        <span><a href="https://llwang.net/">Lucy Lu Wang</a><sup>1,3</sup></span>
+      </div>
+      <div class="affiliations" aria-label="Author affiliations">
+        <span><sup>1</sup> University of Washington</span><span><sup>2</sup> University of Leeds</span><span><sup>3</sup> Allen Institute for Artificial Intelligence</span>
+      </div>
+      <p class="equal-contribution">* Equal contribution</p>
+      <div class="resource-links">
+        <a class="primary-link" href="https://arxiv.org/abs/2606.28733">Read the paper <span aria-hidden="true">↗</span></a>
+        <a href="https://github.com/lhannnn/agentic-abstention">Code &amp; data <span aria-hidden="true">↗</span></a>
+        <a href="https://neurips.cc/virtual/2026/poster/150912">NeurIPS <span aria-hidden="true">↗</span></a>
+        <a href="#results">Explore the results <span aria-hidden="true">↓</span></a>
+        <a href="#citation">Cite <span aria-hidden="true">↓</span></a>
+      </div>
+    </section>
+
+    <div class="headline-results page-width" aria-label="Study at a glance">
+      <div class="headline-result"><span class="result-value"><em>28K+</em> instructions</span><span class="result-label">A study of when agents should stop</span><span class="result-context">Solvable and abstain-warranted tasks</span></div>
+      <div class="headline-result"><span class="result-value"><em>3</em> environments</span><span class="result-label">Web · Terminal · Interactive QA</span><span class="result-context">13 LLM systems and 2 agent scaffolds overall</span></div>
+      <div class="headline-result"><span class="result-value">26.7 → <em>57.4%</em></span><span class="result-label">Timely abstention with CONVOLVE</span><span class="result-context">Llama-3.3-70B · Held-out WebShop subset</span></div>
+    </div>
+
+    <section class="editorial-section page-width" id="overview" aria-labelledby="overview-title">
+      <div class="section-heading"><span class="section-number">// 01</span><h2 id="overview-title">The next action<br> can be to stop.</h2></div>
+      <div class="section-content prose">
+        <p class="lead">An agent can keep searching, browsing, or running commands—even when its goal cannot be achieved.</p>
+        <p>Some requests are underspecified or based on a false premise. Others appear feasible until a tool reveals a missing prerequisite or an unavailable target. Continuing can waste resources or lead to an unsupported answer.</p>
+        <p><strong>Agentic abstention is a sequential decision problem.</strong> At each step, an agent may answer, gather more information, or abstain. The key question is when the evidence warrants stopping.</p>
+        <div class="method-stages">
+          <article><p class="small-label">Request-based</p><h3>The request reveals the blocker.</h3><p>Ambiguity, conflicting requirements, or a false premise can make abstention warranted from the beginning.</p></article>
+          <article><p class="small-label">Environment-based</p><h3>Interaction reveals the blocker.</h3><p>A missing item, file, dependency, or capability becomes apparent only after the agent examines its environment.</p></article>
+        </div>
+      </div>
+      <div class="decision-strip wide-figure" aria-label="Three possible agent decisions">
+        <span class="decision-intro">Request + observations</span><span class="decision-arrow" aria-hidden="true">→</span>
+        <div><strong>Act</strong><span>Gather useful evidence.</span></div><div><strong>Answer</strong><span>Complete a supported goal.</span></div><div class="stop-decision"><strong>Abstain</strong><span>Explain why progress should stop.</span></div>
+      </div>
+    </section>
+
+    <section class="editorial-section page-width" id="benchmark" aria-labelledby="benchmark-title">
+      <div class="section-heading"><span class="section-number">// 02</span><h2 id="benchmark-title">Three environments.<br> One decision boundary.</h2></div>
+      <div class="section-content prose">
+        <p class="lead">We adapt web shopping, terminal tasks, and question answering to study both whether agents abstain and when they do so.</p>
+        <p>The collection includes <strong>28,350 instructions</strong> across three environments. Evaluation coverage varies by experiment: WebShop supports broad model comparisons; terminal and QA experiments examine selected models and scaffolds.</p>
+      </div>
+      <div class="benchmark-grid wide-figure">
+        <article><p class="small-label">01 / WebShop</p><h3>Web shopping</h3><p class="benchmark-number">1,000 <span>tasks</span></p><p>500 solvable tasks and 500 abstention tasks: 249 request-based cases and 251 missing-target cases.</p><p class="caption-note">Subjective preference · Underspecified intent · False premise or contradiction · Missing target</p></article>
+        <article><p class="small-label">02 / Terminal-Bench 2.0</p><h3>Terminal execution</h3><p class="benchmark-number">277 <span>tasks</span></p><p>89 solvable tasks and 188 abstention tasks: 167 request-based cases and 21 missing-prerequisite cases.</p><p class="caption-note">False premise or contradiction · Underspecified intent · Missing prerequisite</p></article>
+        <article><p class="small-label">03 / AbstentionBench adaptation</p><h3>Interactive QA</h3><p class="benchmark-number">27,073 <span>questions</span></p><p>16 source datasets, adapted to let agents answer, abstain, or search a fixed Wikipedia corpus.</p><p class="caption-note">Answer unknown · False premise · Subjective · Underspecified context · Underspecified intent</p></article>
+      </div>
+      <div class="section-content section-right prose"><p class="caption-note">Dataset sizes describe the constructed collection, not a common evaluation set for every model. See the paper for scenario-specific coverage and retrieval settings.</p></div>
+    </section>
+
+    <section class="editorial-section page-width" id="results" aria-labelledby="results-title">
+      <div class="section-heading"><span class="section-number">// 03</span><h2 id="results-title">Abstaining eventually<br> is not abstaining<br> on time.</h2></div>
+      <div class="section-content prose">
+        <p class="lead">Many agents keep interacting after abstention becomes warranted. Some never abstain within the allotted budget.</p>
+        <p>We measure <strong>Abstention Recall @K (AbsRec@K)</strong> from the earliest step at which abstention is warranted. K=1 requires stopping at that step; K=2 allows one additional step of delay.</p>
+        <p>Premature abstentions do not count as correct. <strong>Overall recall</strong> is measured separately within the configured interaction budget and need not equal AbsRec@10.</p>
+        <p class="caption-note">Metrics and figures updated November 4, 2026.</p>
+      </div>
+      <figure class="wide-figure method-figure">
+        <a href="assets/abstention-recall.png" target="_blank" rel="noopener" aria-label="Open full-resolution abstention recall figure"><img src="assets/abstention-recall.png" width="3718" height="1076" alt="Abstention recall curves across Web, Terminal, and QA. Recall generally rises when more delay is allowed; timely recall at K=1 is often much lower." loading="lazy"></a>
+        <figcaption><span>Abstention recall across three environments.</span> K counts decision opportunities from the earliest warranted step. Terminal comparisons use GPT-5.4-mini with two scaffolds. QA models have different evaluation coverage; their curves are not a controlled leaderboard.</figcaption>
+      </figure>
+
+      <div class="results-explorer wide-figure" aria-labelledby="explorer-title">
+        <header class="explorer-header"><div><p class="small-label">Explore the reported results</p><h3 id="explorer-title">How much does timing matter?</h3><p>Choose an environment and the allowed abstention delay.</p></div><div class="explorer-key"><span id="k-readout">K = 1</span><strong id="timing-readout">Strictly timely</strong></div></header>
+        <div class="explorer-controls">
+          <div class="case-switch" role="group" aria-label="Choose results environment"><button type="button" data-environment="web" aria-pressed="true">Web</button><button type="button" data-environment="terminal" aria-pressed="false">Terminal</button><button type="button" data-environment="qa" aria-pressed="false">QA</button></div>
+          <label class="k-control" for="k-slider"><span>Decision opportunities <output id="k-output" for="k-slider">1</output></span><input id="k-slider" type="range" min="1" max="10" step="1" value="1"><span class="slider-endpoints"><span>1 · timely</span><span>10</span></span></label>
+        </div>
+        <p class="explorer-scope" id="explorer-scope">WebShop · 500 abstention tasks per model.</p>
+        <div class="chart-heading" aria-hidden="true"><span>Model / scaffold</span><span>Abstention recall <small>0 — 50 — 100%</small></span></div>
+        <div id="results-chart" class="results-chart"></div>
+        <p class="chart-status" id="chart-status" role="status" aria-live="polite"></p>
+        <noscript><p class="explorer-scope">Enable JavaScript to explore these values. The full curves are shown in the figure above.</p></noscript>
+        <p class="explorer-footnote">Rates use the same numeric inputs as the figure above. K measures the window for a correct abstention, not the number of independent attempts. Results should be interpreted within each experiment’s evaluation scope.</p>
+      </div>
+      <div class="section-content section-right prose">
+        <details class="research-detail"><summary>Model scale, reasoning, and agent scaffolds</summary><p>More capable models are not consistently better at timely abstention. Reasoning can improve timely recall while reducing overall recall, and changing the agent scaffold can alter behavior even with the same base model.</p><a href="assets/reasoning-recall.png" target="_blank" rel="noopener"><img class="detail-figure" src="assets/reasoning-recall.png" width="3448" height="1443" alt="Reasoning comparisons show timely and overall recall can change in different directions on Web and Terminal tasks." loading="lazy"></a><p class="caption-note">The paper’s reasoning comparison uses Qwen3-235B for Web and GPT-5.4-mini for Terminal. These experiments have their own evaluation scopes.</p></details>
+      </div>
+    </section>
+
+    <section class="editorial-section page-width" id="convolve" aria-labelledby="convolve-title">
+      <div class="section-heading"><span class="section-number">// 04</span><h2 id="convolve-title">Learn when to stop.<br> Keep the model fixed.</h2></div>
+      <div class="section-content prose">
+        <p class="lead">CONVOLVE turns interaction trajectories into a reusable playbook of stopping rules.</p>
+        <p>A reflection agent reviews complete trajectories to identify evidence that warranted abstention and actions that delayed it. A curator converts those lessons into structured playbook updates, which are appended to the agent’s context on later tasks.</p>
+        <p>The method changes the agent’s context without updating model parameters.</p>
+      </div>
+      <div class="convolve-flow wide-figure" aria-label="CONVOLVE learning cycle">
+        <div><span>01 / Execute</span><h3>Collect a trajectory</h3><p>Observe the request, tool calls, evidence, and stopping decision.</p></div><i aria-hidden="true">→</i>
+        <div><span>02 / Reflect</span><h3>Find the stopping signal</h3><p>Identify when abstention became warranted and what delayed it.</p></div><i aria-hidden="true">→</i>
+        <div><span>03 / Curate</span><h3>Update the playbook</h3><p>Reuse concise lessons as context for future interactions.</p></div>
+      </div>
+      <div class="table-wrap wide-figure" role="region" aria-label="CONVOLVE results on held-out WebShop abstention tasks" tabindex="0">
+        <table class="results-table"><caption>Llama-3.3-70B · Separate held-out WebShop abstention subset · Percentages</caption><thead><tr><th scope="col">Method</th><th scope="col">Timely recall ↑</th><th scope="col">Overall recall ↑</th><th scope="col">SPL ↑</th></tr></thead><tbody>
+          <tr><th scope="row">Base model</th><td>26.7</td><td>83.2</td><td>55.3</td></tr>
+          <tr><th scope="row">In-context learning</th><td>55.1</td><td>97.0</td><td>77.2</td></tr>
+          <tr><th scope="row">CONVOLVE · lessons from 8B</th><td>55.3</td><td>99.0</td><td>76.4</td></tr>
+          <tr class="ours"><th scope="row">CONVOLVE · lessons from 70B</th><td><strong>57.4</strong></td><td><strong>100.0</strong></td><td><strong>78.9</strong></td></tr>
+        </tbody></table>
+      </div>
+      <div class="section-content section-right prose"><p class="caption-note">Source: the paper’s CONVOLVE WebShop results table. Timely recall is AbsRec@1; SPL rewards correct abstention with shorter interaction paths. The held-out set contains 101 abstention tasks; trained variants use 20 trajectories, with 8 validation examples. The 26.7% baseline comes from this separate held-out set, not the 500-task comparison above.</p><p class="caption-note">These results evaluate abstention on tasks where stopping is correct. They do not establish preservation or improvement of solvable-task completion.</p></div>
+    </section>
+
+    <section class="editorial-section page-width" id="resources" aria-labelledby="resources-title">
+      <div class="section-heading"><span class="section-number">// 05</span><h2 id="resources-title">Read the study.<br> Build on the work.</h2></div>
+      <div class="section-content prose">
+        <p>The paper presents the task construction, timing-aware metrics, evaluation protocols, and additional analyses. The repository provides the research code and data resources.</p>
+        <div class="resource-list"><a href="https://arxiv.org/abs/2606.28733"><span>Paper</span><strong>Agentic Abstention <span aria-hidden="true">↗</span></strong></a><a href="https://github.com/lhannnn/agentic-abstention"><span>Code &amp; data</span><strong>Research repository <span aria-hidden="true">↗</span></strong></a><a href="https://hera-bench.github.io/"><span>Related work</span><strong>HERA: harness–environment co-evolution <span aria-hidden="true">↗</span></strong></a></div>
+      </div>
+    </section>
+
+    <section class="editorial-section page-width citation-section" id="citation" aria-labelledby="citation-title">
+      <div class="section-heading"><span class="section-number">// 06</span><h2 id="citation-title">Cite this work.</h2></div>
+      <div class="section-content">
+        <div class="citation-top"><a href="citation.bib" download>Download BibTeX <span aria-hidden="true">↓</span></a><button class="copy-button" id="copy-citation" type="button">Copy citation</button></div>
+        <pre id="bibtex">@misc{luo2026agenticabstention,
+  title={Agentic Abstention: Do Agents Know When to Stop Instead of Act?},
+  author={Han Luo and Bingbing Wen and Lucy Lu Wang},
+  year={2026},
+  eprint={2606.28733},
+  archivePrefix={arXiv},
+  primaryClass={cs.AI},
+  url={https://arxiv.org/abs/2606.28733}
+}</pre>
+        <span class="copy-status" id="copy-status" role="status" aria-live="polite"></span>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer"><div class="page-width footer-inner"><a class="wordmark" href="#top">AA<span class="wordmark-dot" aria-hidden="true">.</span></a><p>Agentic Abstention<br> Do Agents Know When to Stop Instead of Act?</p><div class="footer-links"><a href="https://hera-bench.github.io/">HERA <span aria-hidden="true">↗</span></a><a href="https://github.com/agentic-abstention/agentic-abstention.github.io">Website source <span aria-hidden="true">↗</span></a></div></div></footer>
+</body>
+</html>
